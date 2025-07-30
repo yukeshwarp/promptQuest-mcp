@@ -1,0 +1,9 @@
+mcp
+mcp[cli]
+mcp-use
+azure-cosmos
+python-dotenv
+openai
+nltk
+streamlit
+langchain-openai
