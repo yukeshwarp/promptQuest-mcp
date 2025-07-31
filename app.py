@@ -36,11 +36,21 @@ async def run_mcp_agent(user_query: str):
         model="gpt-4.1"
     )
     agent = MCPAgent(llm=llm, client=client, max_steps=30)
-    final_prompt = f"""
-        Answer the following query:
-        \"\"\"{user_query}\"\"\"
-        Current date and time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-    """
+    final_prompt = f"""   
+You have three tools available:   
+1. load_dataset_by_date(start_date, end_date) -> dataset_id   
+2. load_dataset_by_offset(offset, limit)     -> dataset_id   
+3. analyse_dataset(dataset_id, instruction)  -> analysis   
+   
+ALWAYS:   
+• Call one of the load_dataset_* tools first (unless you already have the id).   
+• Re-use the dataset_id for analyse_dataset to avoid re-querying Cosmos DB.   
+• If you need to refresh the cache call flush_dataset.   
+   
+Current time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC.   
+USER QUESTION:   
+\"\"\"{user_query}\"\"\"   
+"""
     return await agent.run(final_prompt)
 
 def ask_mcp_agent(prompt):
@@ -141,10 +151,20 @@ elif st.session_state["current_view"] == "Analytics":
     }
 
     def get_quarter_analysis(start_date, end_date):
-        query = f"""
-        Perform a legal chat usage analysis and extract top 10 unique legal topics discussed
-        between {start_date} and {end_date}. Return only a clean list of topics.
-        """
+        query = f"""   
+                You have three tools available:   
+                1. load_dataset_by_date(start_date, end_date) -> dataset_id   
+                2. load_dataset_by_offset(offset, limit)     -> dataset_id   
+                3. analyse_dataset(dataset_id, instruction)  -> analysis   
+                
+                ALWAYS:   
+                • Call one of the load_dataset_* tools first (unless you already have the id).   
+                • Re-use the dataset_id for analyse_dataset to avoid re-querying Cosmos DB.   
+                • If you need to refresh the cache call flush_dataset.   
+
+                USER QUESTION:   
+                \"\"\"Perform a legal chat usage analysis and extract top 10 unique legal topics discussed between {start_date} and {end_date}. Return only a clean list of topics.\"\"\"   
+                """
         try:
             return ask_mcp_agent(query)
         except Exception as e:
